@@ -5,3 +5,5 @@ Import('env')
 env.Append(CPPPATH=["submodules/fem_solver"])
 env.Append(CPPPATH=["submodules/triangulator"])
 env.add_source_files(env.modules_sources, "*.cpp") # Add all cpp files to the build
+env.add_source_files(env.modules_sources, "submodules/fem_solver/*.cpp") # Add all cpp files to the build
+env.add_source_files(env.modules_sources, "submodules/triangulator/*.cpp") # Add all cpp files to the build
