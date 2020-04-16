@@ -4,6 +4,10 @@
 
 A module for the open source game engine [Godot](https://github.com/godotengine/godot) that adds a new Node, *ElasticBody2D*. Attached to a *Polygon2D* or *CollisionPolygon2D* it will triangulate the polygon and enable real-time elastic deformations of the shape using a finite element method.
 
+This was done as a student project for the course Computational Physics III at the FSU Jena in the winter term 19/20.
+
+It uses a [delaunay triangulator](https://github.com/cp3-ws1920/triangulator) and a [finite element solver](https://github.com/cp3-ws1920/fem_solver) submodule which I also wrote for my project.
+
 ## Installation of the module
 To get the source of Godot 3.2.1 stable and add the module, run
 
@@ -119,4 +123,4 @@ Returns the displacements of the vertices (the offsets to their original positio
 
 ## Credits
 
-This repository as well as its submodules use (Eigen)[https://github.com/cp3-ws1920/elastic_body_2d/raw/master/preview.gif], a free C++ template library for linear algebra.
+This repository as well as its submodules use [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page), a free C++ template library for linear algebra.
