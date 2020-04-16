@@ -1,0 +1,6 @@
+[submodule "submodules/fem_solver"]
+	path = submodules/fem_solver
+	url = git@github.com:cp3-ws1920/fem_solver
+[submodule "submodules/triangulator"]
+	path = submodules/triangulator
+	url = git@github.com:cp3-ws1920/triangulator

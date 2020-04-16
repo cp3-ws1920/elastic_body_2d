@@ -1,0 +1,7 @@
+# SCsub
+
+Import('env')
+
+env.Append(CPPPATH=["submodules/fem_solver"])
+env.Append(CPPPATH=["submodules/triangulator"])
+env.add_source_files(env.modules_sources, "*.cpp") # Add all cpp files to the build
