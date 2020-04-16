@@ -116,3 +116,7 @@ Returns the velocities of the vertices.
 * **`PoolVector2Array`**`get_displacements()`
 
 Returns the displacements of the vertices (the offsets to their original positions).
+
+## Credits
+
+This repository as well as its submodules use (Eigen)[https://github.com/cp3-ws1920/elastic_body_2d/raw/master/preview.gif], a free C++ template library for linear algebra.
