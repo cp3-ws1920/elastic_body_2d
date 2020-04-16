@@ -1,5 +1,7 @@
 ## ElasticBody2D
 
+![](https://github.com/cp3-ws1920/elastic_body_2d/raw/master/preview.gif)
+
 A module for the open source game engine [Godot](https://github.com/godotengine/godot) that adds a new Node, *ElasticBody2D*. Attached to a *Polygon2D* or *CollisionPolygon2D* it will triangulate the polygon and enable real-time elastic deformations of the shape using a finite element method.
 
 ## Installation of the module
