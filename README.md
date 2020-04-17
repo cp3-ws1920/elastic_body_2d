@@ -123,4 +123,4 @@ Returns the displacements of the vertices (the offsets to their original positio
 
 ## Credits
 
-This repository as well as its submodules use [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page), a free C++ template library for linear algebra.
+Submodules of this repository use [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page), a free C++ template library for linear algebra.
