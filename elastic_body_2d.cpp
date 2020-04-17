@@ -113,7 +113,7 @@ void ElasticBody2D::_notification(int p_what) {
             segments.resize(nodes.size());
 
             for (int i = 0; i < nodes.size(); ++i) {
-                poly[i] = new Triangulator::Vertex({ nodes[i].x, nodes[i].y });
+                poly[i] = new Triangulator::Vertex(nodes[i].x, nodes[i].y);
             }
             for (int i = 0; i < nodes.size(); ++i) {
                 segments[i] = Triangulator::Edge(*poly[i], *poly[(i + 1) % nodes.size()]);
