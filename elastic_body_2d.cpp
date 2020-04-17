@@ -61,7 +61,7 @@ void ElasticBody2D::free_motion() {
     }
     std::vector<float> disp;
     float delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
-    disp = solver->freeOcillationStep(delta);
+    disp = solver->freeOscillationStep(delta);
 
     PoolVector2Array new_pos;
 
