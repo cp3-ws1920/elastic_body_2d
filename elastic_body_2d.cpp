@@ -9,7 +9,6 @@
 #include "scene/2d/collision_polygon_2d.h"
 #include "scene/2d/area_2d.h"
 
-#include "Eigen/Dense"
 #include <vector>
 
 ElasticBody2D::ElasticBody2D() {
@@ -31,7 +30,7 @@ ElasticBody2D::~ElasticBody2D() {
 }
 
 void ElasticBody2D::deform() {
-    Eigen::VectorXf disp;
+    std::vector<float> disp;
     for (int i = 0; i < forces.size(); ++i) {
         solver->setForce(i, forces[i].x, forces[i].y);
     }
@@ -60,7 +59,7 @@ void ElasticBody2D::free_motion() {
     if (fixed_delta && !Engine::get_singleton()->is_in_physics_frame()) {
         WARN_PRINT("free_motion() should only be called from a physics frame if fixed_delta is enabled!");
     }
-    Eigen::VectorXf disp;
+    std::vector<float> disp;
     float delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
     disp = solver->freeOcillationStep(delta);
 
@@ -114,7 +113,7 @@ void ElasticBody2D::_notification(int p_what) {
             segments.resize(nodes.size());
 
             for (int i = 0; i < nodes.size(); ++i) {
-                poly[i] = new Triangulator::Vertex(Eigen::Vector2f(nodes[i].x, nodes[i].y));
+                poly[i] = new Triangulator::Vertex({ nodes[i].x, nodes[i].y });
             }
             for (int i = 0; i < nodes.size(); ++i) {
                 segments[i] = Triangulator::Edge(*poly[i], *poly[(i + 1) % nodes.size()]);
@@ -195,7 +194,7 @@ void ElasticBody2D::_notification(int p_what) {
                 break;
             }
             std::vector<FEM::Element2D> elements = solver->getElements();
-            Eigen::VectorXf disp = solver->getDisplacements();
+            std::vector<float> disp = solver->getDisplacements();
             std::vector<float> nodes_x = solver->getNodesX();
             std::vector<float> nodes_y = solver->getNodesY();
 
@@ -271,7 +270,7 @@ void ElasticBody2D::set_fixed_delta(bool p_fixed) {
 PoolVector2Array ElasticBody2D::get_velocities() const {
     PoolVector2Array v;
     v.resize(nodes.size());
-    Eigen::VectorXf d2 = solver->getVelocities();
+    std::vector<float> d2 = solver->getVelocities();
     for (int i = 0; i < v.size(); ++i) {
         v.set(i, Vector2(d2[2*map[i]+0], d2[2*map[i]+1]));
     }
@@ -281,7 +280,7 @@ PoolVector2Array ElasticBody2D::get_velocities() const {
 PoolVector2Array ElasticBody2D::get_displacements() const {
     PoolVector2Array d;
     d.resize(nodes.size());
-    Eigen::VectorXf d1 = solver->getDisplacements();
+    std::vector<float> d1 = solver->getDisplacements();
     for (int i = 0; i < d.size(); ++i) {
         d.set(i, Vector2(d1[2*map[i]+0], d1[2*map[i]+1]));
     }
