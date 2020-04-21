@@ -82,7 +82,10 @@ void ElasticBody2D::free_motion() {
 }
 
 void ElasticBody2D::preprocess() {
+    if (solver) delete solver;
+    if (delaunay) delete delaunay;
     solver = new FEM::DeformableMesh2D();
+    delaunay = new Triangulator::Delaunay2D();
     for (int i = 0; i < get_child_count(); ++i) {
         if (Object::cast_to<Area2D>(get_child(i))) {
             pinned_areas.push_back(Object::cast_to<Area2D>(get_child(i)));
