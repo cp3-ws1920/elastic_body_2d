@@ -82,27 +82,10 @@ void ElasticBody2D::free_motion() {
 }
 
 void ElasticBody2D::preprocess() {
-    if (solver) delete solver;
-    if (delaunay) delete delaunay;
-    solver = new FEM::DeformableMesh2D();
-    delaunay = new Triangulator::Delaunay2D();
     for (int i = 0; i < get_child_count(); ++i) {
         if (Object::cast_to<Area2D>(get_child(i))) {
             pinned_areas.push_back(Object::cast_to<Area2D>(get_child(i)));
         }
-    }
-
-    if (Object::cast_to<Polygon2D>(get_parent())) {
-        nodes = Object::cast_to<Polygon2D>(get_parent())->get_polygon();
-    } else if (Object::cast_to<CollisionPolygon2D>(get_parent())) {
-        Vector<Vector2> poly = Object::cast_to<CollisionPolygon2D>(get_parent())->get_polygon();
-        nodes.resize(poly.size());
-        for (int i = 0; i < nodes.size(); ++i) {
-            nodes.set(i, poly[i]);
-        }
-    } else {
-        ERR_PRINT("Parent is neither Polygon2D nor CollisionPolygon2D!");
-        return;
     }
 
     forces.resize(nodes.size());
@@ -167,6 +150,7 @@ void ElasticBody2D::preprocess() {
         solver->setFixedDeltaEnabled(true);
     }
 
+    solver->clearConstraints();
     for (int i = 0; i < solver->getNodesX().size(); ++i) {
         Vector2 pos = Vector2(solver->getNodesX()[i], solver->getNodesY()[i]) + get_global_position();
         Physics2DDirectSpaceState::ShapeResult *res = (Physics2DDirectSpaceState::ShapeResult *)malloc(32 * sizeof(Physics2DDirectSpaceState::ShapeResult));
@@ -195,6 +179,18 @@ void ElasticBody2D::_notification(int p_what) {
         case NOTIFICATION_READY: {
             if (Engine::get_singleton()->is_editor_hint()) break;
 
+            if (Object::cast_to<Polygon2D>(get_parent())) {
+                nodes = Object::cast_to<Polygon2D>(get_parent())->get_polygon();
+            } else if (Object::cast_to<CollisionPolygon2D>(get_parent())) {
+                Vector<Vector2> poly = Object::cast_to<CollisionPolygon2D>(get_parent())->get_polygon();
+                nodes.resize(poly.size());
+                for (int i = 0; i < nodes.size(); ++i) {
+                    nodes.set(i, poly[i]);
+                }
+            } else {
+                ERR_PRINT("Parent is neither Polygon2D nor CollisionPolygon2D!");
+                return;
+            }
             preprocess();
         }
         case NOTIFICATION_DRAW: {
