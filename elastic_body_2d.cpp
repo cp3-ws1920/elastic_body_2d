@@ -81,113 +81,117 @@ void ElasticBody2D::free_motion() {
     }   
 }
 
+void ElasticBody2D::preprocess() {
+    for (int i = 0; i < get_child_count(); ++i) {
+        if (Object::cast_to<Area2D>(get_child(i))) {
+            pinned_areas.push_back(Object::cast_to<Area2D>(get_child(i)));
+        }
+    }
+
+    if (Object::cast_to<Polygon2D>(get_parent())) {
+        nodes = Object::cast_to<Polygon2D>(get_parent())->get_polygon();
+    } else if (Object::cast_to<CollisionPolygon2D>(get_parent())) {
+        Vector<Vector2> poly = Object::cast_to<CollisionPolygon2D>(get_parent())->get_polygon();
+        nodes.resize(poly.size());
+        for (int i = 0; i < nodes.size(); ++i) {
+            nodes.set(i, poly[i]);
+        }
+    } else {
+        ERR_PRINT("Parent is neither Polygon2D nor CollisionPolygon2D!");
+        return;
+    }
+
+    forces.resize(nodes.size());
+
+    std::vector<Triangulator::Vertex *> poly;
+    std::vector<Triangulator::Edge> segments;
+    poly.resize(nodes.size());
+    segments.resize(nodes.size());
+
+    for (int i = 0; i < nodes.size(); ++i) {
+        poly[i] = new Triangulator::Vertex(nodes[i].x, nodes[i].y);
+    }
+    for (int i = 0; i < nodes.size(); ++i) {
+        segments[i] = Triangulator::Edge(*poly[i], *poly[(i + 1) % nodes.size()]);
+    }
+
+    delaunay->vertices = poly;
+    delaunay->segments = segments;
+    delaunay->RefineRupperts(min_angle);
+
+    map.resize(nodes.size());
+    for (int i = 0; i < delaunay->vertices.size(); ++i) {
+        if (delaunay->vertices[i]->maps_to != -1) {
+            map.set(delaunay->vertices[i]->maps_to, i);
+        }
+    }
+
+    std::vector<float> nodes_x;
+    std::vector<float> nodes_y;
+    std::vector<FEM::Element2D> fem_elements;
+    nodes_x.resize(delaunay->vertices.size());
+    nodes_y.resize(delaunay->vertices.size());
+    fem_elements.resize(delaunay->triangles.size());
+
+    for (int i = 0; i < delaunay->vertices.size(); ++i)
+    {
+        nodes_x[i] = delaunay->vertices[i]->coordinates.x();
+        nodes_y[i] = delaunay->vertices[i]->coordinates.y();
+    }
+
+    for (int i = 0; i < fem_elements.size(); ++i)
+    {
+        FEM::Element2D element;
+        // TODO: Why is this in reversed order?
+        element.node_ids_[0] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[2]));
+        element.node_ids_[1] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[1]));
+        element.node_ids_[2] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[0]));
+        fem_elements[i] = element;
+    }
+
+    solver->setMethod((FEM::DeformableMesh2D::Method)(int(method)));
+    solver->setNodesX(nodes_x);
+    solver->setNodesY(nodes_y);
+    solver->setElements(fem_elements);
+    solver->setPoissonRatio(poisson_ratio);
+    solver->setYoungModulus(young_modulus);
+    solver->setFriction(friction);
+    if (fixed_delta) {
+        float delta = 1.0f / (float)Engine::get_singleton()->get_iterations_per_second();
+        solver->setFixedDelta(delta);
+        print_line(String::num_real(delta));
+        solver->setFixedDeltaEnabled(true);
+    }
+
+    for (int i = 0; i < solver->getNodesX().size(); ++i) {
+        Vector2 pos = Vector2(solver->getNodesX()[i], solver->getNodesY()[i]) + get_global_position();
+        Physics2DDirectSpaceState::ShapeResult *res = (Physics2DDirectSpaceState::ShapeResult *)malloc(32 * sizeof(Physics2DDirectSpaceState::ShapeResult));
+        int count = get_world_2d()->get_direct_space_state()->intersect_point(pos, res, 32, Set<RID>(), 4294967295U, false, true);
+        bool flag = false;
+        for (int j = 0; j < pinned_areas.size(); ++j) {
+            for (int k = 0; k < count; ++k) {
+                if (res[k].collider == pinned_areas[j]) {
+                    FEM::Constraint constraint;
+                    constraint.node = i;
+                    constraint.type = static_cast<FEM::Constraint::Type>(3);
+                    solver->setConstraint(constraint);
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag) break;
+        }
+    }
+
+    solver->preprocess();  
+}
+
 void ElasticBody2D::_notification(int p_what) {
     switch (p_what) {
         case NOTIFICATION_READY: {
             if (Engine::get_singleton()->is_editor_hint()) break;
 
-            for (int i = 0; i < get_child_count(); ++i) {
-                if (Object::cast_to<Area2D>(get_child(i))) {
-                    pinned_areas.push_back(Object::cast_to<Area2D>(get_child(i)));
-                }
-            }
-
-            if (Object::cast_to<Polygon2D>(get_parent())) {
-                nodes = Object::cast_to<Polygon2D>(get_parent())->get_polygon();
-            } else if (Object::cast_to<CollisionPolygon2D>(get_parent())) {
-                Vector<Vector2> poly = Object::cast_to<CollisionPolygon2D>(get_parent())->get_polygon();
-                nodes.resize(poly.size());
-                for (int i = 0; i < nodes.size(); ++i) {
-                    nodes.set(i, poly[i]);
-                }
-            } else {
-                ERR_PRINT("Parent is neither Polygon2D nor CollisionPolygon2D!");
-                return;
-            }
-
-            forces.resize(nodes.size());
-
-            std::vector<Triangulator::Vertex *> poly;
-            std::vector<Triangulator::Edge> segments;
-            poly.resize(nodes.size());
-            segments.resize(nodes.size());
-
-            for (int i = 0; i < nodes.size(); ++i) {
-                poly[i] = new Triangulator::Vertex(nodes[i].x, nodes[i].y);
-            }
-            for (int i = 0; i < nodes.size(); ++i) {
-                segments[i] = Triangulator::Edge(*poly[i], *poly[(i + 1) % nodes.size()]);
-            }
-
-            delaunay->vertices = poly;
-            delaunay->segments = segments;
-            delaunay->RefineRupperts(min_angle);
-
-            map.resize(nodes.size());
-            for (int i = 0; i < delaunay->vertices.size(); ++i) {
-                if (delaunay->vertices[i]->maps_to != -1) {
-                    map.set(delaunay->vertices[i]->maps_to, i);
-                }
-            }
-
-            std::vector<float> nodes_x;
-            std::vector<float> nodes_y;
-            std::vector<FEM::Element2D> fem_elements;
-            nodes_x.resize(delaunay->vertices.size());
-            nodes_y.resize(delaunay->vertices.size());
-            fem_elements.resize(delaunay->triangles.size());
-
-            for (int i = 0; i < delaunay->vertices.size(); ++i)
-            {
-                nodes_x[i] = delaunay->vertices[i]->coordinates.x();
-                nodes_y[i] = delaunay->vertices[i]->coordinates.y();
-            }
-
-            for (int i = 0; i < fem_elements.size(); ++i)
-            {
-                FEM::Element2D element;
-                // TODO: Why is this in reversed order?
-                element.node_ids_[0] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[2]));
-                element.node_ids_[1] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[1]));
-                element.node_ids_[2] = std::distance(delaunay->vertices.begin(), std::find(delaunay->vertices.begin(), delaunay->vertices.end(), delaunay->triangles[i]->v[0]));
-                fem_elements[i] = element;
-            }
-
-            solver->setMethod((FEM::DeformableMesh2D::Method)(int(method)));
-            solver->setNodesX(nodes_x);
-            solver->setNodesY(nodes_y);
-            solver->setElements(fem_elements);
-            solver->setPoissonRatio(poisson_ratio);
-            solver->setYoungModulus(young_modulus);
-            solver->setFriction(friction);
-            if (fixed_delta) {
-                float delta = 1.0f / (float)Engine::get_singleton()->get_iterations_per_second();
-                solver->setFixedDelta(delta);
-                print_line(String::num_real(delta));
-                solver->setFixedDeltaEnabled(true);
-            }
-
-            for (int i = 0; i < solver->getNodesX().size(); ++i) {
-                Vector2 pos = Vector2(solver->getNodesX()[i], solver->getNodesY()[i]) + get_global_position();
-                Physics2DDirectSpaceState::ShapeResult *res = (Physics2DDirectSpaceState::ShapeResult *)malloc(32 * sizeof(Physics2DDirectSpaceState::ShapeResult));
-                int count = get_world_2d()->get_direct_space_state()->intersect_point(pos, res, 32, Set<RID>(), 4294967295U, false, true);
-                bool flag = false;
-                for (int j = 0; j < pinned_areas.size(); ++j) {
-                    for (int k = 0; k < count; ++k) {
-                        if (res[k].collider == pinned_areas[j]) {
-                            FEM::Constraint constraint;
-                            constraint.node = i;
-                            constraint.type = static_cast<FEM::Constraint::Type>(3);
-                            solver->setConstraint(constraint);
-                            flag = true;
-                            break;
-                        }
-                    }
-                    if (flag) break;
-                }
-            }
-
-            solver->preprocess();           
+            preprocess();
         }
         case NOTIFICATION_DRAW: {
             if (!Object::cast_to<SceneTree>(get_tree())->is_debugging_collisions_hint()) {
@@ -296,6 +300,7 @@ String ElasticBody2D::get_configuration_warning() const {
 }
 
 void ElasticBody2D::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("preprocess"), &ElasticBody2D::preprocess);
     ClassDB::bind_method(D_METHOD("deform"), &ElasticBody2D::deform);
     ClassDB::bind_method(D_METHOD("free_motion"), &ElasticBody2D::free_motion);
     ClassDB::bind_method(D_METHOD("set_poisson_ratio", "poisson_ratio"), &ElasticBody2D::set_poisson_ratio);

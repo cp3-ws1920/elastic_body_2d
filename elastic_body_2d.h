@@ -49,6 +49,8 @@ public:
 
     virtual String get_configuration_warning() const;
 
+    void preprocess();
+
     void deform();
     void free_motion();
 
