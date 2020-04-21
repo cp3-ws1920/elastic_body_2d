@@ -82,6 +82,7 @@ void ElasticBody2D::free_motion() {
 }
 
 void ElasticBody2D::preprocess() {
+    solver = new FEM::DeformableMesh2D();
     for (int i = 0; i < get_child_count(); ++i) {
         if (Object::cast_to<Area2D>(get_child(i))) {
             pinned_areas.push_back(Object::cast_to<Area2D>(get_child(i)));
