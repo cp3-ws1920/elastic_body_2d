@@ -105,6 +105,10 @@ If `true` a fixed delta is used when calling `free_motion()`. This allows prepro
 
 ### Method Descriptions
 
+* **`void`** `preprocess()`
+
+Triangulates the parent `Polygon2D` oder `CollisionPolygon2D` and executes the preprocessing steps of the FEM solver. Is automatically called on `_ready()`.
+
 * **`void`**`deform()`
 
 Instantly deforms the parent `Polygon2D` or `CollisionPolygon2D` from the forces in the `forces` property.
