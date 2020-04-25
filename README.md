@@ -125,6 +125,10 @@ Returns the velocities of the vertices.
 
 Returns the displacements of the vertices (the offsets to their original positions).
 
+* **`Array`**`get_pinned()`
+
+Returns an array returning containing the polygon indices of constrained nodes.
+
 ## Credits
 
 Submodules of this repository use [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page), a free C++ template library for linear algebra.
