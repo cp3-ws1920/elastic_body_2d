@@ -153,7 +153,7 @@ void ElasticBody2D::preprocess() {
     pinned_nodes.resize(0);
     solver->clearConstraints();
     for (int i = 0; i < solver->getNodesX().size(); ++i) {
-        Vector2 pos = Vector2(solver->getNodesX()[i], solver->getNodesY()[i]) + get_global_position();
+        Vector2 pos = Object::cast_to<Node2D>(get_parent())->get_global_transform().xform(Vector2(solver->getNodesX()[i], solver->getNodesY()[i]));
         Physics2DDirectSpaceState::ShapeResult *res = (Physics2DDirectSpaceState::ShapeResult *)malloc(32 * sizeof(Physics2DDirectSpaceState::ShapeResult));
         int count = get_world_2d()->get_direct_space_state()->intersect_point(pos, res, 32, Set<RID>(), 4294967295U, false, true);
         bool flag = false;
