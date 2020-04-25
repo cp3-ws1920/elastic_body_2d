@@ -150,6 +150,7 @@ void ElasticBody2D::preprocess() {
         solver->setFixedDeltaEnabled(true);
     }
 
+    pinned_nodes.resize(0);
     solver->clearConstraints();
     for (int i = 0; i < solver->getNodesX().size(); ++i) {
         Vector2 pos = Vector2(solver->getNodesX()[i], solver->getNodesY()[i]) + get_global_position();
@@ -163,6 +164,7 @@ void ElasticBody2D::preprocess() {
                     constraint.node = i;
                     constraint.type = static_cast<FEM::Constraint::Type>(3);
                     solver->setConstraint(constraint);
+                    pinned_nodes.push_back(i);
                     flag = true;
                     break;
                 }
@@ -291,6 +293,10 @@ PoolVector2Array ElasticBody2D::get_displacements() const {
     return d;
 }
 
+Array ElasticBody2D::get_pinned() const {
+    return pinned_nodes;
+}
+
 String ElasticBody2D::get_configuration_warning() const {
     if (!Object::cast_to<Polygon2D>(get_parent()) && !Object::cast_to<CollisionPolygon2D>(get_parent())) {
         return TTR("Parent is neither Polygon2D nor CollisionPolygon2D!");
@@ -319,6 +325,7 @@ void ElasticBody2D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_forces"), &ElasticBody2D::get_forces);
     ClassDB::bind_method(D_METHOD("get_velocities"), &ElasticBody2D::get_velocities);
     ClassDB::bind_method(D_METHOD("get_displacements"), &ElasticBody2D::get_displacements);
+    ClassDB::bind_method(D_METHOD("get_pinned"), &ElasticBody2D::get_pinned);
 
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "poisson_ratio"), "set_poisson_ratio", "get_poisson_ratio");
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "young_modulus"), "set_young_modulus", "get_young_modulus");

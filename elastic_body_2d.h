@@ -30,6 +30,7 @@ private:
     bool fixed_delta;
 
     Vector<Area2D *> pinned_areas;
+    Array pinned_nodes;
     PoolVector2Array forces;
 
     PoolVector2Array nodes;
@@ -70,6 +71,8 @@ public:
     PoolVector2Array get_forces() const;
     PoolVector2Array get_velocities() const;
     PoolVector2Array get_displacements() const;
+
+    Array get_pinned() const;
 };
 
 VARIANT_ENUM_CAST(ElasticBody2D::Method);
