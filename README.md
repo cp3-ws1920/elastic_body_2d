@@ -18,7 +18,7 @@ git submodule add https://github.com/cp3-ws1920/elastic_body_2d modules/elastic_
 git submodule update --init --recursive
 ```
 
-To then compile a custom build of Godot which contains the new Node, simply follow the instructions for [compiling Godot from source](http://docs.godotengine.org/en/3.2/development/compiling/). (Normally, this should boil down to execute `scons platform=<windows/x11/osx> target=<release/debug>` with SCons and a compiler installed.)
+To then compile a custom build of Godot which contains the new Node, simply follow the instructions for [compiling Godot from source](http://docs.godotengine.org/en/3.2/development/compiling/). (Normally, this should boil down to execute `scons platform=<windows/x11/osx> target=<release/release_debug>` with SCons and a compiler installed.)
 
 An executable will then be located inside `godot/bin`. A precompiled binary can also be downloaded from the [release page](https://github.com/cp3-ws1920/elastic_body_2d/releases).
 
